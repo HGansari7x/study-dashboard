@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, BookOpen, Calendar, 
-  Bot, Timer, Clock, Smartphone, Settings, BarChart3, Flame 
+  Bot, Timer, Clock, Smartphone, Settings, BarChart3, Flame, Database 
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -13,6 +13,7 @@ import AIMentor from './components/AIMentor';
 import Progress from './components/Progress';
 import Analytics from './components/Analytics';
 import StudySuite from './components/StudySuite';
+import DataBackup from './components/DataBackup';
 import SettingsModal from './components/SettingsModal';
 import { StudyProvider } from './components/StudyContext';
 
@@ -166,6 +167,7 @@ function MainApp() {
             { id: 'stopwatch', label: 'Stopwatch', icon: Clock },
             { id: 'analytics', label: 'Analytics', icon: BarChart3 },
             { id: 'studysuite', label: 'Study Suite & AI', icon: Flame },
+            { id: 'backup', label: 'Data Backup', icon: Database },
             { id: 'progress', label: 'Progress', icon: Smartphone }
           ].map((item) => {
             const Icon = item.icon;
@@ -209,6 +211,7 @@ function MainApp() {
           {currentTab === 'stopwatch' && <Stopwatch />}
           {currentTab === 'analytics' && <Analytics />}
           {currentTab === 'studysuite' && <StudySuite />}
+          {currentTab === 'backup' && <DataBackup />}
           {currentTab === 'progress' && <Progress />}
         </main>
       </div>
