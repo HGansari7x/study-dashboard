@@ -42,7 +42,6 @@ export default function AIMentor() {
 
     try {
       const apiKey = import.meta.env.VITE_GROQ_API_KEY;
-
       if (!apiKey) {
         throw new Error("Groq API Key is missing. Please check your environment variables.");
       }
@@ -54,7 +53,7 @@ export default function AIMentor() {
           'Authorization': `Bearer ${apiKey}`
         },
         body: JSON.stringify({
-          model: 'llama-3.3-70b-versatile', // Updated to the correct active Groq model
+          model: 'llama-3.1-8b-instant',
           messages: [
             { role: 'system', content: SYSTEM_PROMPT },
             ...newMessages.map(m => ({ role: m.role, content: m.content }))
