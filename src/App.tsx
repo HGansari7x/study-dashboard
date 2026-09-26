@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, BookOpen, Calendar, 
-  Bot, Timer, Clock, Smartphone, Settings 
+  Bot, Timer, Clock, Smartphone, Settings, BarChart3 
 } from 'lucide-react';
 
 import Dashboard from './components/Dashboard';
@@ -11,6 +11,7 @@ import Timetable from './components/Timetable';
 import Stopwatch from './components/Stopwatch';
 import AIMentor from './components/AIMentor';
 import Progress from './components/Progress';
+import Analytics from './components/Analytics';
 import SettingsModal from './components/SettingsModal';
 import { StudyProvider } from './components/StudyContext';
 
@@ -162,6 +163,7 @@ function MainApp() {
             { id: 'ai-mentor', label: 'AI Mentor', icon: Bot },
             { id: 'pomodoro', label: 'Pomodoro Timer', icon: Timer },
             { id: 'stopwatch', label: 'Stopwatch', icon: Clock },
+            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
             { id: 'progress', label: 'Progress', icon: Smartphone }
           ].map((item) => {
             const Icon = item.icon;
@@ -203,6 +205,7 @@ function MainApp() {
             />
           )}
           {currentTab === 'stopwatch' && <Stopwatch />}
+          {currentTab === 'analytics' && <Analytics />}
           {currentTab === 'progress' && <Progress />}
         </main>
       </div>
