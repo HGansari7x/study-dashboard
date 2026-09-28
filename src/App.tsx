@@ -21,6 +21,13 @@ import DataBackup from './components/DataBackup';
 import SettingsModal from './components/SettingsModal';
 import { StudyProvider } from './components/StudyContext';
 
+interface UserProfile {
+  name: string;
+  email: string;
+  classTarget: string;
+  examDate: string;
+}
+
 function MainApp() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loadingAuth, setLoadingAuth] = useState<boolean>(true);
@@ -36,7 +43,7 @@ function MainApp() {
     }
   }, []);
 
-  const [userProfile, setUserProfile] = useState(() => {
+  const [userProfile, setUserProfile] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('studypulse_profile');
     return saved ? JSON.parse(saved) : { 
       name: 'User', 
@@ -46,13 +53,13 @@ function MainApp() {
     };
   });
 
-  // Firebase auth state monitor (TypeScript Explicit Type Fixed)
+  // Firebase auth state monitor
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        setUserProfile((prevProfile: any) => {
-          const updatedProfile = {
+        setUserProfile((prevProfile: UserProfile) => {
+          const updatedProfile: UserProfile = {
             ...prevProfile,
             name: user.displayName || prevProfile.name || 'User',
             email: user.email || prevProfile.email || ''
@@ -117,12 +124,10 @@ function MainApp() {
   const handleGoogleLogin = async () => {
     try {
       if (Capacitor.isNativePlatform()) {
-        // 📱 Mobile App (Native Google Login Sheet)
         const googleUser = await GoogleAuth.signIn();
         const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
         await signInWithCredential(auth, credential);
       } else {
-        // 🌐 Web Browser Fallback
         await signInWithPopup(auth, googleProvider);
       }
     } catch (error: any) {
@@ -144,7 +149,8 @@ function MainApp() {
     }
   };
 
-  const handleStartSession = (_slotTitle: string, durationMinutes: number) => {
+  const handleStartSession = (slotTitle: string, durationMinutes: number) => {
+    console.log("Starting session for:", slotTitle);
     setTotalStudyMinutes(prev => prev + durationMinutes);
     setPomodoroSettings({
       duration: durationMinutes > 0 ? durationMinutes : 25,
@@ -204,7 +210,6 @@ function MainApp() {
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       
-      {/* Top Header */}
       <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40">
         <div className="flex items-center gap-3">
           <button 
@@ -239,10 +244,7 @@ function MainApp() {
         </div>
       </header>
 
-      {/* Main Layout Container */}
       <div className="flex flex-1 overflow-hidden relative">
-        
-        {/* Backdrop Overlay */}
         {isMobileSidebarOpen && (
           <div 
             onClick={() => setIsMobileSidebarOpen(false)}
@@ -250,7 +252,6 @@ function MainApp() {
           />
         )}
 
-        {/* Sliding Sidebar */}
         <aside className={`
           fixed md:static inset-y-0 left-0 z-50
           w-72 bg-white border-r border-slate-200 p-4 flex flex-col gap-2 overflow-y-auto
@@ -291,7 +292,6 @@ function MainApp() {
           })}
         </aside>
 
-        {/* Dynamic Content Area */}
         <main className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-50 w-full">
           {currentTab === 'dashboard' && (
             <Dashboard 
