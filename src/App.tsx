@@ -46,12 +46,12 @@ function MainApp() {
     };
   });
 
-  // Firebase auth state monitor (Fixed Stale Closure)
+  // Firebase auth state monitor (TypeScript Explicit Type Fixed)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        setUserProfile((prevProfile) => {
+        setUserProfile((prevProfile: any) => {
           const updatedProfile = {
             ...prevProfile,
             name: user.displayName || prevProfile.name || 'User',
