@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { 
   LayoutDashboard, BookOpen, Calendar, 
-  Bot, Timer, Clock, Smartphone, Settings, BarChart3, Flame, Database 
+  Bot, Timer, Clock, Smartphone, Settings, BarChart3, Flame, Database, Menu, X, LogOut 
 } from 'lucide-react';
+import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { auth, googleProvider } from './firebase';
 
 import Dashboard from './components/Dashboard';
 import SyllabusTracker from './components/SyllabusTracker';
@@ -18,47 +20,56 @@ import SettingsModal from './components/SettingsModal';
 import { StudyProvider } from './components/StudyContext';
 
 function MainApp() {
-  // App load hote hi secure environment variable se API key check karke localStorage mein save karna
-  useEffect(() => {
-    const existingKey = localStorage.getItem('studypulse_gemini_api_key');
-    const envKey = import.meta.env.VITE_GEMINI_API_KEY;
-    if (!existingKey && envKey) {
-      localStorage.setItem('studypulse_gemini_api_key', envKey);
-    }
-  }, []);
-
-  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(() => {
-    return localStorage.getItem('studypulse_auth') === 'true';
-  });
+  const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
+  const [loadingAuth, setLoadingAuth] = useState<boolean>(true);
 
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('studypulse_profile');
     return saved ? JSON.parse(saved) : { 
-      name: 'سہراب مصباحی', 
-      email: 'sohrab@gmail.com', 
+      name: 'User', 
+      email: '', 
       classTarget: 'Class 12 - JEE/Boards', 
       examDate: '2027-02-15' 
     };
   });
 
+  // Firebase auth state monitor
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setIsAuthenticated(true);
+        const updatedProfile = {
+          ...userProfile,
+          name: user.displayName || 'User',
+          email: user.email || ''
+        };
+        setUserProfile(updatedProfile);
+        localStorage.setItem('studypulse_profile', JSON.stringify(updatedProfile));
+        localStorage.setItem('studypulse_auth', 'true');
+      } else {
+        setIsAuthenticated(false);
+        localStorage.setItem('studypulse_auth', 'false');
+      }
+      setLoadingAuth(false);
+    });
+    return () => unsubscribe();
+  }, []);
+
   const [currentTab, setCurrentTab] = useState('dashboard');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   
   const [totalStudyMinutes, setTotalStudyMinutes] = useState<number>(() => {
     const saved = localStorage.getItem('studypulse_total_mins');
     return saved ? Number(saved) : 0;
   });
 
-  // Timetable ke Study slots se total target hours calculate karne ka state
   const [targetStudyHours, setTargetStudyHours] = useState<number>(10);
-
-  // Pomodoro settings state
   const [pomodoroSettings, setPomodoroSettings] = useState<{ duration: number; autoStart: boolean }>({
     duration: 25,
     autoStart: false
   });
 
-  // Har baar jab timetable update ho ya app load ho, Study slots ka duration calculate karein
   useEffect(() => {
     const calculateTargetFromTimetable = () => {
       const savedSlots = localStorage.getItem('studypulse_timetable_slots');
@@ -77,7 +88,6 @@ function MainApp() {
         }
       }
     };
-
     calculateTargetFromTimetable();
   }, [currentTab]);
 
@@ -89,21 +99,41 @@ function MainApp() {
     localStorage.setItem('studypulse_total_mins', totalStudyMinutes.toString());
   }, [totalStudyMinutes]);
 
-  const handleGoogleLogin = () => {
-    setIsAuthenticated(true);
-    localStorage.setItem('studypulse_auth', 'true');
+  const handleGoogleLogin = async () => {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (error: any) {
+      console.error("Google Login Error:", error);
+      alert("Login failed: " + (error.message || "Please check your Firebase configuration."));
+    }
+  };
+
+  const handleLogout = async () => {
+    try {
+      await signOut(auth);
+      setIsAuthenticated(false);
+      localStorage.setItem('studypulse_auth', 'false');
+    } catch (error) {
+      console.error("Logout Error:", error);
+    }
   };
 
   const handleStartSession = (_slotTitle: string, durationMinutes: number) => {
     setTotalStudyMinutes(prev => prev + durationMinutes);
-    
     setPomodoroSettings({
       duration: durationMinutes > 0 ? durationMinutes : 25,
       autoStart: true
     });
-
     setCurrentTab('pomodoro');
   };
+
+  if (loadingAuth) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center font-sans text-slate-500">
+        Loading StudyPulse...
+      </div>
+    );
+  }
 
   if (!isAuthenticated) {
     return (
@@ -117,7 +147,7 @@ function MainApp() {
           
           <button 
             onClick={handleGoogleLogin}
-            className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-medium flex items-center justify-center gap-3 transition-all"
+            className="w-full py-3.5 px-4 bg-white hover:bg-slate-50 border border-slate-200 rounded-2xl shadow-sm text-slate-700 font-medium flex items-center justify-center gap-3 transition-all cursor-pointer"
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -132,57 +162,103 @@ function MainApp() {
     );
   }
 
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'syllabus', label: 'Syllabus Tracker', icon: BookOpen },
+    { id: 'timetable', label: 'Timetable', icon: Calendar },
+    { id: 'ai-mentor', label: 'AI Mentor', icon: Bot },
+    { id: 'pomodoro', label: 'Pomodoro Timer', icon: Timer },
+    { id: 'stopwatch', label: 'Stopwatch', icon: Clock },
+    { id: 'analytics', label: 'Analytics', icon: BarChart3 },
+    { id: 'studysuite', label: 'Study Suite & AI', icon: Flame },
+    { id: 'backup', label: 'Data Backup', icon: Database },
+    { id: 'progress', label: 'Progress', icon: Smartphone }
+  ];
+
   return (
     <div className="min-h-screen bg-slate-50 text-slate-800 flex flex-col font-sans">
       
       {/* Top Header */}
-      <header className="h-16 bg-white border-b border-slate-200 px-6 flex items-center justify-between sticky top-0 z-40">
-        <div className="text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
-          <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
-          {userProfile.name}
+      <header className="h-16 bg-white border-b border-slate-200 px-4 sm:px-6 flex items-center justify-between sticky top-0 z-40">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => setIsMobileSidebarOpen(true)}
+            className="md:hidden p-2 hover:bg-slate-100 rounded-xl text-slate-700 transition-colors"
+            aria-label="Open Menu"
+          >
+            <Menu size={22} />
+          </button>
+          
+          <div className="text-sm sm:text-base font-bold text-slate-800 tracking-tight flex items-center gap-2">
+            <span className="w-2.5 h-2.5 rounded-full bg-blue-600"></span>
+            {userProfile.name} <span className="text-xs text-slate-400 font-normal hidden sm:inline">({userProfile.email})</span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-3">
           <button 
             onClick={() => setIsSettingsOpen(true)}
-            className="p-2.5 hover:bg-slate-100 rounded-xl border border-slate-200 text-slate-700 transition-colors flex items-center gap-2 text-xs font-semibold"
+            className="p-2 sm:px-3 sm:py-2.5 hover:bg-slate-100 rounded-xl border border-slate-200 text-slate-700 transition-colors flex items-center gap-2 text-xs font-semibold"
           >
             <Settings size={16} />
-            <span>Settings</span>
+            <span className="hidden sm:inline">Settings</span>
+          </button>
+          <button 
+            onClick={handleLogout}
+            className="p-2 hover:bg-red-50 text-red-600 rounded-xl border border-slate-200 transition-colors flex items-center gap-1 text-xs font-semibold"
+            title="Logout"
+          >
+            <LogOut size={16} />
           </button>
         </div>
       </header>
 
       {/* Main Layout Container */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-1 overflow-hidden relative">
         
-        {/* Sidebar Navigation */}
-        <aside className="w-64 bg-white border-r border-slate-200 p-4 flex flex-col gap-2 overflow-y-auto">
-          {[
-            { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-            { id: 'syllabus', label: 'Syllabus Tracker', icon: BookOpen },
-            { id: 'timetable', label: 'Timetable', icon: Calendar },
-            { id: 'ai-mentor', label: 'AI Mentor', icon: Bot },
-            { id: 'pomodoro', label: 'Pomodoro Timer', icon: Timer },
-            { id: 'stopwatch', label: 'Stopwatch', icon: Clock },
-            { id: 'analytics', label: 'Analytics', icon: BarChart3 },
-            { id: 'studysuite', label: 'Study Suite & AI', icon: Flame },
-            { id: 'backup', label: 'Data Backup', icon: Database },
-            { id: 'progress', label: 'Progress', icon: Smartphone }
-          ].map((item) => {
+        {/* Backdrop Overlay */}
+        {isMobileSidebarOpen && (
+          <div 
+            onClick={() => setIsMobileSidebarOpen(false)}
+            className="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-50 md:hidden transition-opacity"
+          />
+        )}
+
+        {/* Sliding Sidebar */}
+        <aside className={`
+          fixed md:static inset-y-0 left-0 z-50
+          w-72 bg-white border-r border-slate-200 p-4 flex flex-col gap-2 overflow-y-auto
+          transform transition-transform duration-300 ease-in-out shadow-2xl md:shadow-none
+          ${isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
+          h-full md:h-auto
+        `}>
+          <div className="flex items-center justify-between pb-3 mb-2 border-b border-slate-100 md:hidden">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-400">Navigation</span>
+            <button 
+              onClick={() => setIsMobileSidebarOpen(false)}
+              className="p-2 hover:bg-slate-100 rounded-xl text-slate-600"
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {menuItems.map((item) => {
             const Icon = item.icon;
             const isActive = currentTab === item.id;
             return (
               <button
                 key={item.id}
-                onClick={() => setCurrentTab(item.id)}
+                onClick={() => {
+                  setCurrentTab(item.id);
+                  setIsMobileSidebarOpen(false);
+                }}
                 className={`flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-bold transition-all ${
                   isActive 
                     ? 'bg-blue-600 text-white shadow-md shadow-blue-600/20' 
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
-                <Icon size={16} />
+                <Icon size={18} />
                 <span>{item.label}</span>
               </button>
             );
@@ -190,7 +266,7 @@ function MainApp() {
         </aside>
 
         {/* Dynamic Content Area */}
-        <main className="flex-1 overflow-y-auto p-8 bg-slate-50">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-50 w-full">
           {currentTab === 'dashboard' && (
             <Dashboard 
               userProfile={userProfile} 
@@ -216,7 +292,6 @@ function MainApp() {
         </main>
       </div>
 
-      {/* Settings Modal */}
       <SettingsModal 
         isOpen={isSettingsOpen} 
         onClose={() => setIsSettingsOpen(false)} 
@@ -228,7 +303,6 @@ function MainApp() {
   );
 }
 
-// Root App component wrapping everything inside StudyProvider
 export default function App() {
   return (
     <StudyProvider>
