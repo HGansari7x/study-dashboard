@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "353738770293",
+    "project_id": "studypulse-b558c",
+    "storage_bucket": "studypulse-b558c.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:353738770293:android:647992c500725c9f17353c",
+        "android_client_info": {
+          "package_name": "com.studypulse.app"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "353738770293-6qcrcbio2jsetlbojn385spd26pb4r5d.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.studypulse.app",
+            "certificate_hash": "1fe6d90641847c23ef3214c9510b6e46f23def9b"
+          }
+        },
+        {
+          "client_id": "353738770293-qnabie1ld463h15brpl9kc08kq6nb15p.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBykk5ElgHM-kmoxdP1FtEdQnNjhWErpdw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "353738770293-hgpa540e4glpg1am9in44gbslsj2jmta.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

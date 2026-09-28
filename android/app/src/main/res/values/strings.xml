@@ -4,4 +4,5 @@
     <string name="title_activity_main">StudyPulse</string>
     <string name="package_name">com.studypulse.app</string>
     <string name="custom_url_scheme">com.studypulse.app</string>
+    <string name="server_client_id">353738770293-qnabie1ld463h15brpl9kc08kq6nb15p.apps.googleusercontent.com</string>
 </resources>

@@ -3,7 +3,9 @@ import {
   LayoutDashboard, BookOpen, Calendar, 
   Bot, Timer, Clock, Smartphone, Settings, BarChart3, Flame, Database, Menu, X, LogOut 
 } from 'lucide-react';
-import { signInWithPopup, signOut, onAuthStateChanged } from 'firebase/auth';
+import { signInWithPopup, signOut, onAuthStateChanged, GoogleAuthProvider, signInWithCredential } from 'firebase/auth';
+import { GoogleAuth } from '@codetrix-studio/capacitor-google-auth';
+import { Capacitor } from '@capacitor/core';
 import { auth, googleProvider } from './firebase';
 
 import Dashboard from './components/Dashboard';
@@ -23,6 +25,17 @@ function MainApp() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
   const [loadingAuth, setLoadingAuth] = useState<boolean>(true);
 
+  // Native Google Auth Safe Initialization
+  useEffect(() => {
+    if (Capacitor.isNativePlatform()) {
+      GoogleAuth.initialize({
+        clientId: '353738770293-qnabie1ld463h15brpl9kc08kq6nb15p.apps.googleusercontent.com',
+        scopes: ['profile', 'email'],
+        grantOfflineAccess: true,
+      });
+    }
+  }, []);
+
   const [userProfile, setUserProfile] = useState(() => {
     const saved = localStorage.getItem('studypulse_profile');
     return saved ? JSON.parse(saved) : { 
@@ -33,18 +46,20 @@ function MainApp() {
     };
   });
 
-  // Firebase auth state monitor
+  // Firebase auth state monitor (Fixed Stale Closure)
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setIsAuthenticated(true);
-        const updatedProfile = {
-          ...userProfile,
-          name: user.displayName || 'User',
-          email: user.email || ''
-        };
-        setUserProfile(updatedProfile);
-        localStorage.setItem('studypulse_profile', JSON.stringify(updatedProfile));
+        setUserProfile((prevProfile) => {
+          const updatedProfile = {
+            ...prevProfile,
+            name: user.displayName || prevProfile.name || 'User',
+            email: user.email || prevProfile.email || ''
+          };
+          localStorage.setItem('studypulse_profile', JSON.stringify(updatedProfile));
+          return updatedProfile;
+        });
         localStorage.setItem('studypulse_auth', 'true');
       } else {
         setIsAuthenticated(false);
@@ -101,7 +116,15 @@ function MainApp() {
 
   const handleGoogleLogin = async () => {
     try {
-      await signInWithPopup(auth, googleProvider);
+      if (Capacitor.isNativePlatform()) {
+        // 📱 Mobile App (Native Google Login Sheet)
+        const googleUser = await GoogleAuth.signIn();
+        const credential = GoogleAuthProvider.credential(googleUser.authentication.idToken);
+        await signInWithCredential(auth, credential);
+      } else {
+        // 🌐 Web Browser Fallback
+        await signInWithPopup(auth, googleProvider);
+      }
     } catch (error: any) {
       console.error("Google Login Error:", error);
       alert("Login failed: " + (error.message || "Please check your Firebase configuration."));
@@ -110,6 +133,9 @@ function MainApp() {
 
   const handleLogout = async () => {
     try {
+      if (Capacitor.isNativePlatform()) {
+        await GoogleAuth.signOut();
+      }
       await signOut(auth);
       setIsAuthenticated(false);
       localStorage.setItem('studypulse_auth', 'false');
