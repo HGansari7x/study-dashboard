@@ -200,7 +200,6 @@ export default function Dashboard({ userProfile, setCurrentTab, totalStudyMinute
         return slot;
       }
     }
-    // Strictly return null if no slot matches current running time
     return null;
   };
 
@@ -216,24 +215,24 @@ export default function Dashboard({ userProfile, setCurrentTab, totalStudyMinute
 
       <div className={`transition-all duration-200 z-40 ${
         isSticky 
-          ? 'fixed top-4 left-72 right-8 max-w-6xl mx-auto shadow-2xl' 
+          ? 'fixed top-4 left-4 right-4 md:left-72 md:right-8 max-w-6xl mx-auto shadow-2xl' 
           : 'relative w-full'
       }`}>
-        <div className="bg-[#0b101d]/75 backdrop-blur-xl border border-slate-700/50 p-5 rounded-3xl shadow-2xl flex flex-col md:flex-row items-center justify-between gap-4">
-          <div>
-            <h2 className="text-base font-bold text-white flex items-center gap-2">
-              📅 Board Exams 2027 Countdown
+        <div className="bg-[#0b101d]/90 backdrop-blur-xl border border-slate-700/50 p-4 sm:p-5 rounded-3xl shadow-2xl flex flex-row items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h2 className="text-xs sm:text-base font-bold text-white flex items-center gap-1.5 truncate">
+              📅 <span className="truncate">Board Exams 2027 Countdown</span>
             </h2>
-            <p className="text-[11px] text-slate-400">Stay consistent every single day to crush your goals</p>
+            <p className="text-[10px] sm:text-[11px] text-slate-400 hidden sm:block">Stay consistent every single day to crush your goals</p>
           </div>
-          <div className="flex items-center gap-3 bg-slate-950/60 px-4 py-2.5 rounded-2xl border border-slate-800/80 text-sm font-mono font-bold">
-            <div className="text-center"><span className="text-blue-400 text-base">{timeLeft.days}</span> <span className="text-[9px] text-slate-500 block uppercase">Days</span></div>
+          <div className="flex items-center gap-2 bg-slate-950/60 px-3 py-2 sm:px-4 sm:py-2.5 rounded-2xl border border-slate-800/80 text-xs sm:text-sm font-mono font-bold shrink-0">
+            <div className="text-center"><span className="text-blue-400 text-sm sm:text-base">{timeLeft.days}</span> <span className="text-[8px] sm:text-[9px] text-slate-500 block uppercase">Days</span></div>
             <span className="text-slate-600">:</span>
-            <div className="text-center"><span className="text-blue-400 text-base">{String(timeLeft.hours).padStart(2, '0')}</span> <span className="text-[9px] text-slate-500 block uppercase">Hrs</span></div>
+            <div className="text-center"><span className="text-blue-400 text-sm sm:text-base">{String(timeLeft.hours).padStart(2, '0')}</span> <span className="text-[8px] sm:text-[9px] text-slate-500 block uppercase">Hrs</span></div>
             <span className="text-slate-600">:</span>
-            <div className="text-center"><span className="text-blue-400 text-base">{String(timeLeft.mins).padStart(2, '0')}</span> <span className="text-[9px] text-slate-500 block uppercase">Min</span></div>
+            <div className="text-center"><span className="text-blue-400 text-sm sm:text-base">{String(timeLeft.mins).padStart(2, '0')}</span> <span className="text-[8px] sm:text-[9px] text-slate-500 block uppercase">Min</span></div>
             <span className="text-slate-600">:</span>
-            <div className="text-center"><span className="text-blue-400 text-base">{String(timeLeft.secs).padStart(2, '0')}</span> <span className="text-[9px] text-slate-500 block uppercase">Sec</span></div>
+            <div className="text-center"><span className="text-blue-400 text-sm sm:text-base">{String(timeLeft.secs).padStart(2, '0')}</span> <span className="text-[8px] sm:text-[9px] text-slate-500 block uppercase">Sec</span></div>
           </div>
         </div>
       </div>
